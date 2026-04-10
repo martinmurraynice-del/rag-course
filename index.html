@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 产品必备技能 · RAG</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    :root {
+      --bg: #0a0e1a;
+      --surface: rgba(255,255,255,0.04);
+      --surface2: rgba(255,255,255,0.08);
+      --border: rgba(255,255,255,0.1);
+      --purple: #a78bfa;
+      --cyan: #67e8f9;
+      --blue: #60a5fa;
+      --pink: #f472b6;
+      --green: #34d399;
+      --orange: #fb923c;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      line-height: 1.7;
+    }
+
+    /* ── Animated Background ── */
+    .bg-mesh {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% 10%, rgba(167,139,250,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 60% at 80% 80%, rgba(103,232,249,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 50% 50%, rgba(96,165,250,0.06) 0%, transparent 60%);
+      animation: meshMove 12s ease-in-out infinite alternate;
+    }
+    @keyframes meshMove {
+      0% { transform: scale(1) rotate(0deg); }
+      100% { transform: scale(1.05) rotate(2deg); }
+    }
+
+    /* ── Floating Particles ── */
+    .particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      animation: float linear infinite;
+      opacity: 0;
+    }
+    @keyframes float {
+      0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 0.6; }
+      100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+    }
+
+    /* ── Layout ── */
+    .container { max-width: 900px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 16px 0;
+      background: rgba(10,14,26,0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    nav .inner {
+      max-width: 900px; margin: 0 auto; padding: 0 24px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .nav-logo {
+      font-size: 15px; font-weight: 600;
+      background: linear-gradient(135deg, var(--purple), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .nav-links { display: flex; gap: 24px; }
+    .nav-links a {
+      font-size: 13px; color: var(--muted); text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    /* ── Hero ── */
+    .hero {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 100px 24px 60px;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 16px; border-radius: 100px;
+      background: rgba(167,139,250,0.1); border: 1px solid rgba(167,139,250,0.3);
+      font-size: 13px; color: var(--purple); margin-bottom: 28px;
+    }
+    .hero-badge span { width: 6px; height: 6px; border-radius: 50%; background: var(--purple); animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.4); } }
+
+    h1 {
+      font-size: clamp(36px, 6vw, 64px);
+      font-weight: 700; line-height: 1.15; letter-spacing: -1px;
+      margin-bottom: 20px;
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, var(--purple) 0%, var(--cyan) 50%, var(--blue) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-sub { font-size: 18px; color: var(--muted); max-width: 560px; margin: 0 auto 40px; }
+
+    .hero-cta {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 32px; border-radius: 100px;
+      background: linear-gradient(135deg, var(--purple), var(--blue));
+      color: white; font-size: 15px; font-weight: 500;
+      text-decoration: none; cursor: pointer; border: none;
+      box-shadow: 0 0 30px rgba(167,139,250,0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 0 50px rgba(167,139,250,0.6); }
+
+    /* ── Section ── */
+    section { padding: 80px 0; }
+    .section-label {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--purple); margin-bottom: 12px;
+    }
+    .section-label::before { content: ''; width: 20px; height: 2px; background: var(--purple); }
+    h2 { font-size: clamp(24px, 4vw, 36px); font-weight: 700; margin-bottom: 12px; }
+    .section-desc { color: var(--muted); font-size: 16px; margin-bottom: 48px; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px;
+      transition: transform 0.3s, border-color 0.3s, background 0.3s;
+      position: relative; overflow: hidden;
+    }
+    .card::before {
+      content: ''; position: absolute; inset: 0; border-radius: 16px;
+      background: linear-gradient(135deg, rgba(167,139,250,0.05), transparent);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .card:hover { transform: translateY(-4px); border-color: rgba(167,139,250,0.3); background: var(--surface2); }
+    .card:hover::before { opacity: 1; }
+
+    /* ── Timeline (LLM Evolution) ── */
+    .timeline { position: relative; padding-left: 0; }
+    .timeline-item {
+      display: flex; gap: 24px; margin-bottom: 32px;
+      animation: fadeUp 0.6s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .timeline-num {
+      flex-shrink: 0; width: 48px; height: 48px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 700; position: relative;
+    }
+    .timeline-num.v1 { background: rgba(96,165,250,0.15); color: var(--blue); border: 1px solid rgba(96,165,250,0.3); }
+    .timeline-num.v2 { background: rgba(167,139,250,0.15); color: var(--purple); border: 1px solid rgba(167,139,250,0.3); }
+    .timeline-num.v3 { background: rgba(52,211,153,0.15); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+    .timeline-num.v4 { background: linear-gradient(135deg, rgba(167,139,250,0.2), rgba(103,232,249,0.2)); color: var(--cyan); border: 1px solid rgba(103,232,249,0.4); box-shadow: 0 0 20px rgba(103,232,249,0.2); }
+    .timeline-content { flex: 1; }
+    .timeline-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+    .timeline-desc { color: var(--muted); font-size: 14px; line-height: 1.8; }
+
+    .flow-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 14px; border-radius: 100px; font-size: 13px;
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      margin-top: 10px; font-family: monospace;
+    }
+    .flow-arrow { color: var(--cyan); font-weight: bold; }
+
+    /* ── Limitation Cards ── */
+    .limit-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 32px; }
+    @media (max-width: 560px) { .limit-grid { grid-template-columns: 1fr; } }
+    .limit-card {
+      padding: 20px 22px; border-radius: 12px;
+      background: var(--surface); border: 1px solid var(--border);
+    }
+    .limit-icon { font-size: 24px; margin-bottom: 8px; }
+    .limit-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .limit-desc { font-size: 13px; color: var(--muted); }
+
+    .solution-list { list-style: none; }
+    .solution-item {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 18px 22px; border-radius: 12px; margin-bottom: 12px;
+      background: var(--surface); border: 1px solid var(--border);
+      transition: border-color 0.3s;
+    }
+    .solution-item:hover { border-color: rgba(167,139,250,0.3); }
+    .solution-item.highlight {
+      background: linear-gradient(135deg, rgba(167,139,250,0.08), rgba(103,232,249,0.05));
+      border-color: rgba(167,139,250,0.3);
+    }
+    .sol-num { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 6px; flex-shrink: 0; }
+    .sol-num.s1 { background: rgba(148,163,184,0.1); color: var(--muted); }
+    .sol-num.s2 { background: rgba(148,163,184,0.1); color: var(--muted); }
+    .sol-num.s3 { background: rgba(167,139,250,0.2); color: var(--purple); }
+
+    /* ── Flow Diagram ── */
+    .flow-diagram {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border); border-radius: 20px; padding: 40px 32px;
+    }
+    .flow-row { display: flex; align-items: center; justify-content: center; gap: 0; flex-wrap: wrap; }
+    .flow-node {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 18px; text-align: center;
+      font-size: 13px; line-height: 1.5; min-width: 120px; max-width: 140px;
+      transition: all 0.3s; cursor: default; position: relative;
+    }
+    .flow-node:hover {
+      border-color: var(--purple);
+      background: rgba(167,139,250,0.08);
+      transform: scale(1.05);
+      z-index: 2;
+      box-shadow: 0 0 20px rgba(167,139,250,0.2);
+    }
+    .flow-node .node-title { font-weight: 600; color: var(--text); }
+    .flow-node .node-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .flow-node.accent { border-color: rgba(251,146,60,0.4); }
+    .flow-node.accent .node-title { color: var(--orange); }
+
+    .flow-arrow-h {
+      width: 32px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      color: var(--cyan); font-size: 18px;
+    }
+    .flow-arrow-v {
+      width: 100%; display: flex; align-items: center; justify-content: center;
+      padding: 8px 0; color: var(--cyan); font-size: 18px;
+    }
+
+    /* ── Pipeline Sections ── */
+    .pipeline-section { margin-bottom: 40px; }
+    .pipeline-header {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
+    }
+    .pipeline-badge {
+      padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 700;
+    }
+    .badge-a { background: rgba(251,146,60,0.15); color: var(--orange); border: 1px solid rgba(251,146,60,0.3); }
+    .badge-b { background: rgba(96,165,250,0.15); color: var(--blue); border: 1px solid rgba(96,165,250,0.3); }
+    .badge-c { background: rgba(52,211,153,0.15); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+    .badge-d { background: rgba(244,114,182,0.15); color: var(--pink); border: 1px solid rgba(244,114,182,0.3); }
+    .badge-e { background: rgba(167,139,250,0.15); color: var(--purple); border: 1px solid rgba(167,139,250,0.3); }
+    .badge-f { background: rgba(103,232,249,0.15); color: var(--cyan); border: 1px solid rgba(103,232,249,0.3); }
+    .badge-g { background: rgba(251,146,60,0.15); color: var(--orange); border: 1px solid rgba(251,146,60,0.3); }
+    .badge-h { background: rgba(96,165,250,0.12); color: var(--blue); border: 1px solid rgba(96,165,250,0.25); }
+
+    .compare-table { width:100%; border-collapse:collapse; font-size:13px; margin-top:16px; }
+    .compare-table th { padding:10px 14px; text-align:left; font-weight:600; font-size:12px; letter-spacing:0.5px; color:var(--muted); border-bottom:1px solid var(--border); }
+    .compare-table td { padding:12px 14px; border-bottom:1px solid rgba(255,255,255,0.04); vertical-align:top; }
+    .compare-table tr:hover td { background:rgba(255,255,255,0.02); }
+    .compare-table .tag { display:inline-block; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:600; }
+    .tag-mix  { background:rgba(103,232,249,0.1); color:var(--cyan); }
+    .tag-struct { background:rgba(96,165,250,0.1); color:var(--blue); }
+    .tag-both { background:rgba(167,139,250,0.1); color:var(--purple); }
+
+    .method-list { list-style:none; display:flex; flex-direction:column; gap:10px; margin-top:12px; }
+    .method-item { display:flex; gap:12px; align-items:flex-start; padding:14px 16px; background:var(--surface); border:1px solid var(--border); border-radius:10px; }
+    .method-num { flex-shrink:0; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; background:rgba(251,146,60,0.15); color:var(--orange); }
+    .method-text { font-size:14px; color:var(--muted); line-height:1.6; }
+    .method-text strong { color:var(--text); }
+
+    .gen-card { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px; }
+    @media(max-width:560px){ .gen-card{ grid-template-columns:1fr; } }
+    .gen-item { padding:18px 20px; background:var(--surface); border:1px solid var(--border); border-radius:12px; transition:border-color 0.3s; }
+    .gen-item:hover { border-color:rgba(167,139,250,0.3); }
+    .gen-icon { font-size:20px; margin-bottom:8px; }
+    .gen-title { font-size:14px; font-weight:600; margin-bottom:4px; }
+    .gen-desc { font-size:13px; color:var(--muted); line-height:1.6; }
+    .pipeline-title { font-size: 18px; font-weight: 600; }
+
+    .highlight-box {
+      padding: 14px 20px; border-radius: 10px; margin: 16px 0;
+      background: rgba(251,146,60,0.08); border-left: 3px solid var(--orange);
+      font-size: 14px; color: var(--text);
+    }
+    .highlight-box.blue { background: rgba(96,165,250,0.08); border-left-color: var(--blue); }
+
+    .tech-list { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
+    .tech-item {
+      padding: 14px 18px; border-radius: 10px;
+      background: var(--surface); border: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .tech-name { font-weight: 600; color: var(--cyan); display: block; margin-bottom: 4px; }
+    .tech-desc { color: var(--muted); font-size: 13px; }
+
+    .responsibility-list { list-style: none; margin-top: 12px; }
+    .responsibility-list li {
+      padding: 10px 16px; font-size: 14px; color: var(--muted);
+      border-left: 2px solid rgba(167,139,250,0.3);
+      margin-bottom: 8px; padding-left: 16px;
+      background: rgba(167,139,250,0.03); border-radius: 0 8px 8px 0;
+    }
+    .responsibility-list li::before { content: '▸ '; color: var(--purple); }
+
+    /* ── Context Window ── */
+    .context-window {
+      background: rgba(103,232,249,0.04); border: 1px solid rgba(103,232,249,0.2);
+      border-radius: 12px; padding: 20px 24px;
+    }
+    .context-window h4 { font-size: 14px; color: var(--cyan); margin-bottom: 14px; font-weight: 600; }
+    .context-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      padding: 5px 12px; border-radius: 100px; font-size: 12px;
+      background: rgba(103,232,249,0.08); border: 1px solid rgba(103,232,249,0.2);
+      color: var(--cyan);
+    }
+    .chip.purple { background: rgba(167,139,250,0.08); border-color: rgba(167,139,250,0.2); color: var(--purple); }
+    .chip.green  { background: rgba(52,211,153,0.08);  border-color: rgba(52,211,153,0.2);  color: var(--green); }
+
+    /* ── Footer ── */
+    footer {
+      padding: 40px 0; text-align: center;
+      border-top: 1px solid var(--border); color: var(--muted); font-size: 13px;
+    }
+
+    /* ── Scroll Reveal ── */
+    .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── Divider ── */
+    .divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 0; }
+
+    /* ── Sub-label ── */
+    .sub-label { font-size: 13px; font-weight: 600; color: var(--purple); margin-bottom: 10px; margin-top: 24px; }
+  </style>
+</head>
+<body>
+
+<!-- Animated background -->
+<div class="bg-mesh"></div>
+<div class="particles" id="particles"></div>
+
+<!-- Navigation -->
+<nav>
+  <div class="inner">
+    <div class="nav-logo">⚡ RAG · 检索增强生成</div>
+    <div class="nav-links">
+      <a href="#llm-evolution">LLM演进</a>
+      <a href="#limitation">局限性</a>
+      <a href="#how-rag-works">运转原理</a>
+      <a href="#pipeline">知识库构建</a>
+      <a href="#retrieval">检索</a>
+      <a href="#augment-generate">增强生成</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════
+     HERO
+══════════════════════════════════════════════ -->
+<section class="hero">
+  <div style="position:relative;z-index:1;">
+    <div class="hero-badge">
+      <span></span>
+      AI 产品必备技能
+    </div>
+    <h1>
+      检索增强生成<br>
+      <span class="gradient-text">RAG</span>
+    </h1>
+    <p class="hero-sub">
+      Retrieval-Augmented Generation —— 让大模型拥有长期记忆，突破知识边界，连接外部世界
+    </p>
+    <a href="#llm-evolution" class="hero-cta">
+      开始探索 →
+    </a>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════════════════════════════════════════
+     LLM EVOLUTION
+══════════════════════════════════════════════ -->
+<section id="llm-evolution">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">LLM 演进历程</div>
+      <h2>如何让大模型越来越像人？</h2>
+      <p class="section-desc">大模型本身不具备记忆能力，只能给提示词、输出反馈 —— 我们通过能力叠加，让它一步步进化。</p>
+    </div>
+
+    <div class="timeline">
+
+      <div class="timeline-item reveal" style="animation-delay:0.1s">
+        <div class="timeline-num v1">1.0</div>
+        <div class="timeline-content card">
+          <div class="timeline-title">有对话能力 · Chatbot</div>
+          <div class="timeline-desc">只具备单轮对话能力，无法记住上下文</div>
+          <div class="flow-pill">
+            Prompt <span class="flow-arrow">→</span> LLM 1.0 <span class="flow-arrow">→</span> Response
+          </div>
+        </div>
+      </div>
+
+      <div class="timeline-item reveal" style="animation-delay:0.2s">
+        <div class="timeline-num v2">2.0</div>
+        <div class="timeline-content card">
+          <div class="timeline-title">有短期记忆 · 多轮对话</div>
+          <div class="timeline-desc">解决短期记忆问题，但模型记忆有一定的遗忘曲线</div>
+          <div style="margin-top:14px;">
+            <div class="context-window">
+              <h4>Context Window 上下文窗口</h4>
+              <div class="context-chips">
+                <span class="chip">Query 搜索查询</span>
+                <span class="chip purple">System Prompt 系统提示词</span>
+                <span class="chip green">Chat History 聊天记录</span>
+              </div>
+            </div>
+          </div>
+          <div class="flow-pill" style="margin-top:14px;">
+            Context Window <span class="flow-arrow">→</span> LLM 2.0 <span class="flow-arrow">→</span> Response
+          </div>
+        </div>
+      </div>
+
+      <div class="timeline-item reveal" style="animation-delay:0.3s">
+        <div class="timeline-num v3">3.0</div>
+        <div class="timeline-content card">
+          <div class="timeline-title">有思考能力 · 推理增强</div>
+          <div class="timeline-desc">加入 CoT 思维链，上下文窗口扩展至 1M token+，具备长思考能力</div>
+          <div class="flow-pill" style="margin-top:10px;">
+            CoT + Context <span class="flow-arrow">→</span> LLM 3.0 <span class="flow-arrow">→</span> Response
+          </div>
+        </div>
+      </div>
+
+      <div class="timeline-item reveal" style="animation-delay:0.4s">
+        <div class="timeline-num v4">4.0</div>
+        <div class="timeline-content card" style="border-color:rgba(103,232,249,0.3); background: linear-gradient(135deg, rgba(167,139,250,0.06), rgba(103,232,249,0.04));">
+          <div class="timeline-title" style="color:var(--cyan);">有长期记忆 · RAG</div>
+          <div class="timeline-desc">
+            <strong style="color:var(--text);">RAG = Retrieval-Augmented Generation</strong>，中文译为检索增强生成。<br>
+            通过检索外部知识库，突破模型训练数据的时效性和专业性局限。
+          </div>
+          <div style="margin-top:16px;">
+            <div class="context-window">
+              <h4>完整 Context Window（RAG 时代）</h4>
+              <div class="context-chips">
+                <span class="chip">Query</span>
+                <span class="chip purple">System Prompt</span>
+                <span class="chip green">Chat History</span>
+                <span class="chip">ICL 样本训练</span>
+                <span class="chip purple">Summary 总结</span>
+                <span class="chip">CoT 思维链草稿</span>
+                <span class="chip" style="background:rgba(251,146,60,0.08);border-color:rgba(251,146,60,0.3);color:var(--orange);">📦 Chunks 切片</span>
+              </div>
+            </div>
+          </div>
+          <div class="flow-pill" style="margin-top:14px;border-color:rgba(103,232,249,0.3);">
+            RAG Context <span class="flow-arrow">→</span> LLM 4.0 <span class="flow-arrow">→</span> Response
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════════════════════════════════════════
+     LIMITATION
+══════════════════════════════════════════════ -->
+<section id="limitation">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">为什么需要 RAG</div>
+      <h2>大模型的局限性</h2>
+      <p class="section-desc">四大核心局限催生了 RAG 技术的诞生</p>
+    </div>
+
+    <div class="limit-grid reveal">
+      <div class="limit-card">
+        <div class="limit-icon">⏰</div>
+        <div class="limit-title">实效性</div>
+        <div class="limit-desc">训练数据有截止日期，无法获取最新信息</div>
+      </div>
+      <div class="limit-card">
+        <div class="limit-icon">👻</div>
+        <div class="limit-title">幻觉性</div>
+        <div class="limit-desc">可能生成看似合理但实际错误的内容</div>
+      </div>
+      <div class="limit-card">
+        <div class="limit-icon">🔬</div>
+        <div class="limit-title">专业性</div>
+        <div class="limit-desc">垂直领域知识深度有限，难以支撑专业决策</div>
+      </div>
+      <div class="limit-card">
+        <div class="limit-icon">🔒</div>
+        <div class="limit-title">安全性</div>
+        <div class="limit-desc">企业私有数据不能直接训练到公开模型中</div>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <div class="sub-label">解决方案演进</div>
+      <ul class="solution-list">
+        <li class="solution-item">
+          <span class="sol-num s1">方案 1</span>
+          <div>
+            <strong>模型微调 · SFT（Supervised Fine-Tuning）</strong>
+            <div style="font-size:13px;color:var(--muted);margin-top:4px;">成本高、周期长，更新困难，有数据泄露风险</div>
+          </div>
+        </li>
+        <li class="solution-item">
+          <span class="sol-num s2">方案 2</span>
+          <div>
+            <strong>超长提示词</strong>
+            <div style="font-size:13px;color:var(--muted);margin-top:4px;">消耗大量 token，成本高，检索精度随长度下降</div>
+          </div>
+        </li>
+        <li class="solution-item highlight">
+          <span class="sol-num s3">方案 3</span>
+          <div>
+            <strong style="color:var(--purple);">RAG · 检索增强生成 ✨</strong>
+            <div style="font-size:13px;color:var(--muted);margin-top:4px;">外部知识库实时检索，作为 LLM 的额外输入 —— 低成本、高时效、可控</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════════════════════════════════════════
+     HOW RAG WORKS
+══════════════════════════════════════════════ -->
+<section id="how-rag-works">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">运转原理</div>
+      <h2>RAG 是如何运转的？</h2>
+      <p class="section-desc">知识库构建（离线）→ 检索 → 增强 → 生成，四步完成智能问答</p>
+    </div>
+
+    <div class="flow-diagram reveal">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:28px;text-align:center;">
+        一、知识库构建 · 离线操作（Offline Pipeline）
+      </p>
+
+      <!-- Row 1 -->
+      <div class="flow-row">
+        <div class="flow-node accent">
+          <div class="node-title">原始数据采集</div>
+          <div class="node-sub">Pipeline A<br>多源数据聚合筛选<br><span style="color:var(--orange);font-weight:600;">重心：数据分类体系</span></div>
+        </div>
+        <div class="flow-arrow-h">→</div>
+        <div class="flow-node">
+          <div class="node-title">文档解析</div>
+          <div class="node-sub">非结构数据<br>结构化转化</div>
+        </div>
+        <div class="flow-arrow-h">→</div>
+        <div class="flow-node">
+          <div class="node-title">数据清洗</div>
+          <div class="node-sub">剔除噪声<br>统一格式</div>
+        </div>
+      </div>
+
+      <!-- Down arrow -->
+      <div class="flow-arrow-v">↓</div>
+
+      <!-- Row 2 (reverse) -->
+      <div class="flow-row" style="flex-direction:row-reverse;">
+        <div class="flow-node" style="border-color:rgba(52,211,153,0.3);">
+          <div class="node-title" style="color:var(--green);">文本分割</div>
+          <div class="node-sub">语义完整的<br>「知识单元」拆分</div>
+        </div>
+        <div class="flow-arrow-h">←</div>
+        <div class="flow-node" style="border-color:rgba(103,232,249,0.3);">
+          <div class="node-title" style="color:var(--cyan);">文本向量化</div>
+          <div class="node-sub">Embedding<br>语义数字化</div>
+        </div>
+        <div class="flow-arrow-h">←</div>
+        <div class="flow-node" style="border-color:rgba(167,139,250,0.3);">
+          <div class="node-title" style="color:var(--purple);">向量索引构建</div>
+          <div class="node-sub">高效检索的<br>「数据引擎」</div>
+        </div>
+      </div>
+
+      <div style="height:32px;"></div>
+      <div style="height:1px;background:var(--border);margin:0 -8px 32px;"></div>
+
+      <p style="font-size:13px;color:var(--muted);margin-bottom:24px;text-align:center;">
+        二、在线推理流程（Online RAG）
+      </p>
+      <div class="flow-row" style="justify-content:center;gap:0;">
+        <div class="flow-node" style="background:rgba(96,165,250,0.06);border-color:rgba(96,165,250,0.3);">
+          <div class="node-title" style="color:var(--blue);">用户 Query</div>
+          <div class="node-sub">输入问题</div>
+        </div>
+        <div class="flow-arrow-h">→</div>
+        <div class="flow-node" style="background:rgba(103,232,249,0.06);border-color:rgba(103,232,249,0.3);">
+          <div class="node-title" style="color:var(--cyan);">向量检索</div>
+          <div class="node-sub">召回相关 Chunks</div>
+        </div>
+        <div class="flow-arrow-h">→</div>
+        <div class="flow-node" style="background:rgba(167,139,250,0.06);border-color:rgba(167,139,250,0.3);">
+          <div class="node-title" style="color:var(--purple);">增强 Prompt</div>
+          <div class="node-sub">注入知识上下文</div>
+        </div>
+        <div class="flow-arrow-h">→</div>
+        <div class="flow-node" style="background:rgba(52,211,153,0.06);border-color:rgba(52,211,153,0.3);">
+          <div class="node-title" style="color:var(--green);">LLM 生成</div>
+          <div class="node-sub">有据可依的回答</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════════════════════════════════════════
+     PIPELINE A & B
+══════════════════════════════════════════════ -->
+<section id="pipeline">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">知识库构建详解</div>
+      <h2>知识库构建 Pipeline A – F</h2>
+      <p class="section-desc">从原始数据到可检索的向量索引，离线构建的六大流程</p>
+    </div>
+
+    <!-- Pipeline A -->
+    <div class="pipeline-section reveal">
+      <div class="pipeline-header">
+        <span class="pipeline-badge badge-a">Pipeline A</span>
+        <div class="pipeline-title">原始数据采集 · 多源数据的聚合和筛选</div>
+      </div>
+
+      <div class="card">
+        <div class="highlight-box">
+          🏝️ &nbsp;<strong>核心原则：</strong>只采集与<u>业务场景强相关</u>的数据，同时记录数据来源
+        </div>
+
+        <p style="font-size:14px;color:var(--muted);margin-top:16px;">
+          重心在于按照需求场景下的<strong style="color:var(--text);">数据分类/分类体系</strong>进行采集：
+          找业务方要 / 让业务方构建 / Python 爬取 / 找高质量下载 / 购买
+        </p>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px;">
+          <div style="padding:16px;background:var(--surface);border-radius:10px;border:1px solid var(--border);">
+            <div style="font-size:12px;font-weight:600;color:var(--orange);margin-bottom:8px;">采集渠道</div>
+            <div style="font-size:13px;color:var(--muted);">官网、数据库、API、爬虫、人工录入、采购数据集</div>
+          </div>
+          <div style="padding:16px;background:var(--surface);border-radius:10px;border:1px solid var(--border);">
+            <div style="font-size:12px;font-weight:600;color:var(--orange);margin-bottom:8px;">数据类型</div>
+            <div style="font-size:13px;color:var(--muted);">文档、网页、PDF、图片、音视频、结构化数据</div>
+          </div>
+        </div>
+
+        <div style="margin-top:20px;padding:16px;background:rgba(251,146,60,0.05);border-radius:10px;border:1px solid rgba(251,146,60,0.2);">
+          <div style="font-size:12px;font-weight:700;color:var(--orange);margin-bottom:10px;">📋 PM 面试真题</div>
+          <div style="font-size:13px;color:var(--muted);line-height:2;">
+            ▸ 项目中数据来源有哪些？<br>
+            ▸ 数据量级是多大？成本是多少？
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pipeline B -->
+    <div class="pipeline-section reveal">
+      <div class="pipeline-header">
+        <span class="pipeline-badge badge-b">Pipeline B</span>
+        <div class="pipeline-title">文档解析 · 非结构数据的结构化转化</div>
+      </div>
+
+      <div class="card">
+        <div class="flow-pill" style="margin-bottom:20px;font-size:12px;">
+          格式识别 <span class="flow-arrow">→</span> 格式分类 <span class="flow-arrow">→</span> 技术匹配 <span class="flow-arrow">→</span> 技术执行
+        </div>
+        <p style="font-size:14px;color:var(--muted);margin-bottom:20px;">保留文档原生结构，转化为标准化格式</p>
+
+        <div class="sub-label">核心解析技术</div>
+        <div class="tech-list">
+          <div class="tech-item">
+            <span class="tech-name">OCR · Optical Character Recognition / 光学字符识别</span>
+            <span class="tech-desc">图片提取文本 | 实现过程：版面分析 → 表格识别 → 文本识别 → 图像识别 → 结构整合</span>
+          </div>
+          <div class="tech-item">
+            <span class="tech-name">ASR · Automated Speech Recognition / 自动语音识别</span>
+            <span class="tech-desc">音频转译文本</span>
+          </div>
+          <div class="tech-item">
+            <span class="tech-name">TTS · Text To Speech / 语音合成</span>
+            <span class="tech-desc">文字转语音（可用于输出验证环节）</span>
+          </div>
+        </div>
+
+        <div class="sub-label">产品经理在此阶段的职责</div>
+        <ul class="responsibility-list">
+          <li>输出《文档解析质量标准》，明确不同格式数据的解析要求</li>
+          <li>协调业务文档管理员提供格式说明</li>
+          <li>定义解析后数据的输出格式</li>
+          <li>组织抽样校验，推动解决解析异常问题</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Pipeline C -->
+    <div class="pipeline-section reveal">
+      <div class="pipeline-header">
+        <span class="pipeline-badge badge-c">Pipeline C</span>
+        <div class="pipeline-title">数据清洗 · 保留语义核心，剔除无关信息</div>
+      </div>
+      <div class="card">
+        <p style="font-size:14px;color:var(--muted);margin-bottom:16px;">原始数据中常包含冗余信息（文档页眉页脚、重复段落）、无效内容（乱码、无意义符号），需通过清洗实现<strong style="color:var(--text);">「数据瘦身」</strong>，同时标准化格式以提升后续处理效率。</p>
+        <div class="flow-pill" style="margin-bottom:20px;font-size:12px;">
+          剔除冗余信息 <span class="flow-arrow">→</span> 内容改写 <span class="flow-arrow">→</span> 格式标准化 <span class="flow-arrow">→</span> 敏感信息过滤
+        </div>
+        <div class="sub-label">怎样清洗：质量校验与修正</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+          <div style="padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;text-align:center;">
+            <div style="font-size:18px;margin-bottom:6px;">🤖</div>
+            <div style="font-size:13px;font-weight:600;">自动校验</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px;">规则过滤、格式检查</div>
+          </div>
+          <div style="padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;text-align:center;">
+            <div style="font-size:18px;margin-bottom:6px;">👁️</div>
+            <div style="font-size:13px;font-weight:600;">人工抽样</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px;">抽样人工核查质量</div>
+          </div>
+          <div style="padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;text-align:center;">
+            <div style="font-size:18px;margin-bottom:6px;">🔧</div>
+            <div style="font-size:13px;font-weight:600;">异常处理</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px;">标记、修正或丢弃</div>
+          </div>
+        </div>
+        <div class="highlight-box" style="margin-top:20px;">
+          <strong>语义清洗与优化：</strong>不只是删除，还要保证清洗后内容语义连贯完整
+        </div>
+      </div>
+    </div>
+
+    <!-- Pipeline D -->
+    <div class="pipeline-section reveal">
+      <div class="pipeline-header">
+        <span class="pipeline-badge badge-d">Pipeline D</span>
+        <div class="pipeline-title">文本分割 · Chunk 切片</div>
+      </div>
+      <div class="card">
+        <div class="highlight-box blue" style="margin-bottom:20px;">
+          新词 <strong>Chunk</strong>：将长文档拆分为语义完整的最小知识单元，是 RAG 检索精度的关键
+        </div>
+        <div class="sub-label">切分三大原则</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;">
+            <span style="flex-shrink:0;font-weight:700;color:var(--pink);font-size:13px;">A</span>
+            <div style="font-size:14px;color:var(--muted);"><strong style="color:var(--text);">语义完整性：</strong>优先按「自然语义边界」分割（段落、章节、句子），避免将结论与论证过程拆分到不同 Chunk</div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;">
+            <span style="flex-shrink:0;font-weight:700;color:var(--pink);font-size:13px;">B</span>
+            <div style="font-size:14px;color:var(--muted);"><strong style="color:var(--text);">长度适配：</strong>根据不同模型、不同使用场景确定切分的具体分割长度</div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;">
+            <span style="flex-shrink:0;font-weight:700;color:var(--pink);font-size:13px;">C</span>
+            <div style="font-size:14px;color:var(--muted);"><strong style="color:var(--text);">重叠窗口机制：</strong>相邻 Chunk 保留一定重叠内容，防止语义被硬截断</div>
+          </div>
+        </div>
+        <div class="sub-label">文本分割 6 大类</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          <span class="chip purple">固定长度</span>
+          <span class="chip">语义感知</span>
+          <span class="chip purple">文档结构</span>
+          <span class="chip">关键词/主题</span>
+          <span class="chip purple">多粒度</span>
+          <span class="chip">混合分块</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pipeline E -->
+    <div class="pipeline-section reveal">
+      <div class="pipeline-header">
+        <span class="pipeline-badge badge-e">Pipeline E</span>
+        <div class="pipeline-title">文本向量化 · Embedding Model</div>
+      </div>
+      <div class="card">
+        <p style="font-size:14px;color:var(--muted);margin-bottom:20px;">
+          <strong style="color:var(--text);">嵌入模型（Embedding Model）</strong>是将文本、图像、音频等数据转换为<strong style="color:var(--purple);">低维稠密向量</strong>的神经网络模型，是 RAG、推荐系统、语义搜索等 AI 应用的核心组件。
+        </p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+          <div style="padding:18px;background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.2);border-radius:12px;">
+            <div style="font-size:12px;font-weight:700;color:var(--purple);margin-bottom:8px;">输入</div>
+            <div style="font-size:13px;color:var(--muted);">任意文本、句子、段落（即 Chunk）</div>
+          </div>
+          <div style="padding:18px;background:rgba(103,232,249,0.06);border:1px solid rgba(103,232,249,0.2);border-radius:12px;">
+            <div style="font-size:12px;font-weight:700;color:var(--cyan);margin-bottom:8px;">输出</div>
+            <div style="font-size:13px;color:var(--muted);">高维浮点数向量（如 768 / 1536 维）</div>
+          </div>
+        </div>
+        <div class="highlight-box blue">
+          ⚠️ <strong>关键：</strong>离线构建知识库与在线用户查询，必须使用<strong style="color:var(--cyan);"> 同一个 Embedding 模型</strong>，才能保证向量空间一致
+        </div>
+      </div>
+    </div>
+
+    <!-- Pipeline F -->
+    <div class="pipeline-section reveal">
+      <div class="pipeline-header">
+        <span class="pipeline-badge badge-f">Pipeline F</span>
+        <div class="pipeline-title">向量索引构建 · 专业人士做，了解即可</div>
+      </div>
+      <div class="card">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+          <div style="padding:18px;background:rgba(103,232,249,0.05);border:1px solid rgba(103,232,249,0.2);border-radius:12px;">
+            <div style="font-size:12px;font-weight:700;color:var(--cyan);margin-bottom:8px;">向量数据库（Vector DB）</div>
+            <div style="font-size:13px;color:var(--muted);line-height:1.7;">通过<strong style="color:var(--text);">相似度搜索</strong>查找语义相近数据，是 RAG 的核心基础设施</div>
+          </div>
+          <div style="padding:18px;background:rgba(96,165,250,0.05);border:1px solid rgba(96,165,250,0.2);border-radius:12px;">
+            <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:8px;">关系型数据库（SQL）</div>
+            <div style="font-size:13px;color:var(--muted);line-height:1.7;"><strong style="color:var(--text);">关键词精准匹配</strong>，业界最成熟、应用最广泛，适合结构化检索</div>
+          </div>
+        </div>
+        <div class="sub-label">检索策略对比</div>
+        <table class="compare-table">
+          <thead>
+            <tr><th>策略</th><th>解决的问题</th><th>适用场景</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="tag tag-mix">混合检索</span></td>
+              <td style="color:var(--muted);font-size:13px;">解决「内容理解」问题（语义 + 关键词）</td>
+              <td style="color:var(--muted);font-size:13px;">需要语义理解的问答</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-struct">结构化搜索</span></td>
+              <td style="color:var(--muted);font-size:13px;">解决「范围限定」问题（时间、类别、权限）</td>
+              <td style="color:var(--muted);font-size:13px;">精确过滤、权限控制</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-both">两者结合</span></td>
+              <td style="color:var(--muted);font-size:13px;">先粗筛（结构化）→ 再精找（混合）→ 最终排序</td>
+              <td style="color:var(--muted);font-size:13px;">企业级知识库</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="highlight-box" style="margin-top:16px;">
+          💡 <strong>原则：</strong>能用结构化检索就不用混合检索，简单优先，降低系统复杂度
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════════════════════════════════════════
+     RETRIEVAL
+══════════════════════════════════════════════ -->
+<section id="retrieval">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">02 · 在线过程</div>
+      <h2>检索 Retrieval</h2>
+      <p class="section-desc">由用户触发的在线过程 —— 查询改写、语义检索、多路召回、重排序</p>
+    </div>
+
+    <div class="card reveal" style="margin-bottom:32px;">
+      <div class="sub-label">检索阶段全景</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px;">
+        <div style="padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;">
+          <div style="font-size:12px;font-weight:600;color:var(--orange);margin-bottom:8px;">查询 Query</div>
+          <div style="font-size:13px;color:var(--muted);">查询改写和分解；根据文本生成 SQL，在关系型数据库中检索内容</div>
+        </div>
+        <div style="padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;">
+          <div style="font-size:12px;font-weight:600;color:var(--cyan);margin-bottom:8px;">检索 Search</div>
+          <div style="font-size:13px;color:var(--muted);">结构化搜索 + 语义搜索；根据文本生成 embedding，在向量数据库中检索内容</div>
+        </div>
+        <div style="padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;">
+          <div style="font-size:12px;font-weight:600;color:var(--purple);margin-bottom:8px;">索引 Index</div>
+          <div style="font-size:13px;color:var(--muted);">快速匹配、定位；嵌入模型必须与离线构建时保持一致</div>
+        </div>
+        <div style="padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;">
+          <div style="font-size:12px;font-weight:600;color:var(--green);margin-bottom:8px;">重排 Rerank</div>
+          <div style="font-size:13px;color:var(--muted);">Rerank 模型对召回结果二次精排，提升最终结果质量</div>
+        </div>
+      </div>
+      <div style="margin-top:16px;padding:14px 18px;background:rgba(52,211,153,0.05);border:1px solid rgba(52,211,153,0.2);border-radius:10px;font-size:13px;color:var(--muted);">
+        🎯 <strong style="color:var(--text);">场景思维 = 用户故事：</strong>每一个检索策略的设计，都要从真实用户使用场景出发
+      </div>
+    </div>
+
+    <!-- Pipeline G -->
+    <div class="pipeline-section reveal">
+      <div class="pipeline-header">
+        <span class="pipeline-badge badge-g">Pipeline G</span>
+        <div class="pipeline-title">Query 改写 · 让查询更精准</div>
+      </div>
+      <div class="card">
+        <p style="font-size:14px;color:var(--muted);margin-bottom:20px;">人工检索时只用当前最新表达，但同一含义有多种说法。Query 改写通过 <strong style="color:var(--text);">Seq2Seq</strong> 等模型，将原始查询转化为更易被检索系统理解的形式。</p>
+        <div class="sub-label">六种改写方法</div>
+        <ul class="method-list">
+          <li class="method-item">
+            <span class="method-num">1</span>
+            <div class="method-text"><strong>语义强化：</strong>通过同义词扩展、语义改写等手段，丰富 query 的语义表达，让检索系统更全面地理解用户意图</div>
+          </li>
+          <li class="method-item">
+            <span class="method-num">2</span>
+            <div class="method-text"><strong>歧义消解：</strong>识别并消除 query 中的多义词、指代不明等歧义，确保检索方向精准</div>
+          </li>
+          <li class="method-item">
+            <span class="method-num">3</span>
+            <div class="method-text"><strong>上下文补全：</strong>利用对话历史或会话上下文，将指代词还原为具体内容</div>
+          </li>
+          <li class="method-item">
+            <span class="method-num">4</span>
+            <div class="method-text"><strong>意图拆解：</strong>将复杂的复合 query 拆分为多个子意图，分别检索后融合，提高召回精度</div>
+          </li>
+          <li class="method-item">
+            <span class="method-num">5</span>
+            <div class="method-text"><strong>领域术语适配：</strong>将通用表达映射为特定领域的专业术语，提升垂直场景召回率</div>
+          </li>
+          <li class="method-item">
+            <span class="method-num">6</span>
+            <div class="method-text"><strong>约束条件强化：</strong>显式提取或补充 query 中的时间、地点、数量、格式等约束条件，提升检索过滤精准度</div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Pipeline H -->
+    <div class="pipeline-section reveal">
+      <div class="pipeline-header">
+        <span class="pipeline-badge badge-h">Pipeline H</span>
+        <div class="pipeline-title">多路查询 & 查询分解</div>
+      </div>
+      <div class="card">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+          <div style="padding:16px;background:rgba(103,232,249,0.05);border:1px solid rgba(103,232,249,0.2);border-radius:10px;">
+            <div style="font-size:12px;font-weight:600;color:var(--cyan);margin-bottom:6px;">混合搜索</div>
+            <div style="font-size:13px;color:var(--muted);">关键词（BM25）+ 向量检索（Embedding）并行召回</div>
+          </div>
+          <div style="padding:16px;background:rgba(96,165,250,0.05);border:1px solid rgba(96,165,250,0.2);border-radius:10px;">
+            <div style="font-size:12px;font-weight:600;color:var(--blue);margin-bottom:6px;">查询构建</div>
+            <div style="font-size:13px;color:var(--muted);">将自然语言转化为结构化查询（SQL / 过滤条件）</div>
+          </div>
+        </div>
+        <div class="flow-pill" style="margin-bottom:20px;">
+          多路召回 <span class="flow-arrow">→</span> 结果合并去重 <span class="flow-arrow">→</span> 重排序（Rerank）<span class="flow-arrow">→</span> Top-K 输出
+        </div>
+        <div style="padding:16px;background:rgba(167,139,250,0.05);border:1px solid rgba(167,139,250,0.2);border-radius:10px;font-size:13px;color:var(--muted);">
+          📊 <strong style="color:var(--text);">重排序策略：</strong>用 score 和 top-K 召回相似度最高的 Chunks，再经 Rerank 模型二次精排后输入 LLM
+        </div>
+        <div class="sub-label" style="margin-top:20px;">产品经理职责</div>
+        <ul class="responsibility-list">
+          <li>明确召回目标（精准率 vs 召回率的权衡）</li>
+          <li>制定检索质量评估标准（如 Hit Rate、MRR）</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══════════════════════════════════════════════
+     AUGMENT & GENERATE
+══════════════════════════════════════════════ -->
+<section id="augment-generate">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label">03 & 04 · 增强与生成</div>
+      <h2>增强 Augment · 生成 Generate</h2>
+      <p class="section-desc">将检索结果注入 Prompt，驱动 LLM 生成有据可依的最终答案</p>
+    </div>
+
+    <!-- Augment -->
+    <div class="pipeline-section reveal">
+      <div class="pipeline-header">
+        <span style="padding:6px 14px;border-radius:8px;font-size:13px;font-weight:700;background:rgba(52,211,153,0.15);color:var(--green);border:1px solid rgba(52,211,153,0.3);">增强</span>
+        <div class="pipeline-title">提示词构建 · 将检索结果与用户查询融合</div>
+      </div>
+      <div class="card">
+        <div class="context-window">
+          <h4>最终注入 LLM 的 Prompt 结构</h4>
+          <div class="context-chips">
+            <span class="chip purple">System Prompt</span>
+            <span class="chip">用户 Query</span>
+            <span class="chip" style="background:rgba(251,146,60,0.08);border-color:rgba(251,146,60,0.3);color:var(--orange);">📦 召回的 Chunks</span>
+            <span class="chip green">Chat History</span>
+            <span class="chip purple">CoT 指令</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Generate -->
+    <div class="pipeline-section reveal">
+      <div class="pipeline-header">
+        <span style="padding:6px 14px;border-radius:8px;font-size:13px;font-weight:700;background:rgba(167,139,250,0.15);color:var(--purple);border:1px solid rgba(167,139,250,0.3);">生成</span>
+        <div class="pipeline-title">LLM 生成执行 · 输出最终答案</div>
+      </div>
+      <div class="card">
+        <div class="gen-card">
+          <div class="gen-item">
+            <div class="gen-icon">⚡</div>
+            <div class="gen-title">LLM 生成执行</div>
+            <div class="gen-desc">基于增强后的完整 Prompt，调用大模型生成回答</div>
+          </div>
+          <div class="gen-item">
+            <div class="gen-icon">✨</div>
+            <div class="gen-title">内容优化与后处理</div>
+            <div class="gen-desc">格式化输出、引用标注、内容安全过滤、质量评分</div>
+          </div>
+          <div class="gen-item">
+            <div class="gen-icon">💬</div>
+            <div class="gen-title">多轮对话与上下文管理</div>
+            <div class="gen-desc">维护 Chat History，实现跨轮次的连贯对话体验</div>
+          </div>
+          <div class="gen-item">
+            <div class="gen-icon">🧩</div>
+            <div class="gen-title">复杂问题处理策略</div>
+            <div class="gen-desc">问题分解 → 子问题分别检索 → 结果合并 → 综合回答</div>
+          </div>
+        </div>
+        <div class="flow-pill" style="margin-top:24px;justify-content:center;">
+          Query <span class="flow-arrow">→</span> 改写 <span class="flow-arrow">→</span> 检索 <span class="flow-arrow">→</span> 增强 Prompt <span class="flow-arrow">→</span> LLM 生成 <span class="flow-arrow">→</span> 后处理 <span class="flow-arrow">→</span> 输出
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     FOOTER
+══════════════════════════════════════════════ -->
+<footer>
+  <div class="container">
+    <div style="font-size:24px;margin-bottom:12px;">⚡</div>
+    <div style="font-size:15px;font-weight:600;margin-bottom:8px;">AI 产品必备技能 · RAG</div>
+    <div>Retrieval-Augmented Generation · 检索增强生成</div>
+    <div style="margin-top:16px;font-size:12px;opacity:0.5;">知识库构建 Pipeline A–F &nbsp;·&nbsp; 检索 Pipeline G–H &nbsp;·&nbsp; 增强生成</div>
+  </div>
+</footer>
+
+<script>
+  // ── Scroll Reveal ──
+  const reveals = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+  }, { threshold: 0.1 });
+  reveals.forEach(el => io.observe(el));
+
+  // ── Particles ──
+  const container = document.getElementById('particles');
+  const colors = ['#a78bfa','#67e8f9','#60a5fa','#34d399','#f472b6'];
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = Math.random() * 4 + 1;
+    p.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      animation-duration:${Math.random()*15+10}s;
+      animation-delay:${Math.random()*10}s;
+    `;
+    container.appendChild(p);
+  }
+
+  // ── Active nav link on scroll ──
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-links a');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(s => { if (window.scrollY >= s.offsetTop - 120) current = s.id; });
+    navLinks.forEach(a => {
+      a.style.color = a.getAttribute('href') === '#'+current ? 'var(--text)' : '';
+    });
+  });
+</script>
+</body>
+</html>
